@@ -1,0 +1,9 @@
+# The exact CE frontend currently deployed; no dependency rebuild or runtime downloads.
+FROM makeplane/plane-frontend:v1.4.3@sha256:95ce1418b7b92ba5ce64e6f6d8a1c8bf7ad664018786bd79fc40a2e5094cf0c5
+ARG REVISION=unknown
+LABEL org.opencontainers.image.source="https://github.com/ElmarAI/plane" \
+      org.opencontainers.image.revision=$REVISION \
+      org.opencontainers.image.licenses="AGPL-3.0-only"
+COPY sso/bootstrap.js /usr/share/nginx/html/oidc-bootstrap.js
+# Run before the SPA can replace the initial deep link with its login page.
+RUN sed -i 's@<head>@<head><script src="/oidc-bootstrap.js"></script>@' /usr/share/nginx/html/index.html
