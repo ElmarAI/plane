@@ -213,3 +213,18 @@ def test_initiate_preserves_existing_session_until_callback():
     assert params["nonce"] == [transaction["nonce"]]
     assert params["code_challenge"] == [oidc.challenge(transaction["verifier"])]
     assert params["code_challenge_method"] == ["S256"]
+
+
+def test_oidc_callback_query_not_logged():
+    from types import SimpleNamespace
+    from django.http import HttpResponse
+    from plane.middleware.logger import RequestLoggerMiddleware
+
+    request = RequestFactory().get("/auth/oidc/callback/", {"code": "secret-code", "state": "secret-state"})
+    request.user = SimpleNamespace(is_authenticated=False)
+    with patch("plane.middleware.logger.api_logger") as logger:
+        RequestLoggerMiddleware(lambda r: HttpResponse(status=403))(request)
+    logger.info.assert_called_once()
+    logged = str(logger.info.call_args)
+    assert "secret-code" not in logged and "secret-state" not in logged
+    assert "/auth/oidc/callback/" in logged

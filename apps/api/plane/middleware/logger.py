@@ -59,9 +59,12 @@ class RequestLoggerMiddleware:
 
         user_agent = request.META.get("HTTP_USER_AGENT", "")
 
+        # OIDC callbacks carry single-use authorization codes and state. Keep
+        # these out of request logs, including failed/abandoned callbacks.
+        log_path = request.path if request.path.startswith("/auth/oidc/") else request.get_full_path()
         # Log the request information
         api_logger.info(
-            f"{request.method} {request.get_full_path()} {response.status_code}",
+            f"{request.method} {log_path} {response.status_code}",
             extra={
                 "path": request.path,
                 "method": request.method,
@@ -146,7 +149,7 @@ class APITokenLogMiddleware:
                 ).hexdigest(),
                 "path": request.path,
                 "method": request.method,
-                "query_params": request.META.get("QUERY_STRING", ""),
+                "query_params": "" if request.path.startswith("/auth/oidc/") else request.META.get("QUERY_STRING", ""),
                 "headers": self._redacted_headers(request),
                 "body": self._safe_decode_body(request_body) if request_body else None,
                 "response_body": self._safe_decode_body(response.content) if response.content else None,
