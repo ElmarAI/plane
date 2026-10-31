@@ -1,0 +1,33 @@
+name: plane-oidc-test
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: plane_test
+      POSTGRES_PASSWORD: isolated-test-only
+      POSTGRES_DB: plane_test
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U plane_test]
+      interval: 2s
+      retries: 30
+  redis:
+    image: valkey/valkey:7.2.11-alpine
+  tests:
+    build:
+      context: apps/api
+      dockerfile: Dockerfile.sso
+    environment:
+      DJANGO_SETTINGS_MODULE: plane.settings.test
+      DATABASE_URL: postgresql://plane_test:isolated-test-only@db/plane_test
+      REDIS_URL: redis://redis:6379/0
+      WEB_URL: https://plane.example
+      SECRET_KEY: isolated-oidc-tests-never-used-in-production-74ba
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_started}
+    volumes:
+      - ./apps/api/pytest.ini:/code/pytest.ini:ro
+    entrypoint: [/bin/sh, -ec]
+    command:
+      - pip install --no-cache-dir pytest==8.3.5 pytest-django==4.11.1 && python -m pytest plane/tests/unit/authentication/test_oidc.py

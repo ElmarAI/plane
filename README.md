@@ -1,3 +1,5 @@
+> **Elmar OIDC pilot fork:** based on Plane CE v1.4.3. See [configuration, account linking, tests and limitations](docs/elmar/OIDC.md). Corresponding source is this repository.
+
 <br /><br />
 
 <p align="center">

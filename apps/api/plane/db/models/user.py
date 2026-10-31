@@ -270,6 +270,7 @@ class Profile(TimeAuditModel):
 
 class Account(TimeAuditModel):
     PROVIDER_CHOICES = (
+        ("oidc", "OpenID Connect"),
         ("google", "Google"),
         ("github", "Github"),
         ("gitlab", "GitLab"),

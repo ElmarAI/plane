@@ -1,0 +1,8 @@
+# The exact upstream runtime already deployed in Demo 1; all modified Python
+# sources are copied from this fork. No runtime downloads or source mounts.
+FROM makeplane/plane-backend:v1.4.3@sha256:9b75bf46cf4ffa94272a337450ab96a4577f2b81ceff00def11f5c71eb8dd743
+ARG REVISION=unknown
+LABEL org.opencontainers.image.source="https://github.com/ElmarAI/plane" \
+      org.opencontainers.image.revision=$REVISION \
+      org.opencontainers.image.licenses="AGPL-3.0-only"
+COPY plane /code/plane
