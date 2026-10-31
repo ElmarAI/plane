@@ -191,3 +191,25 @@ def test_callback_account_authorization(create_user, mode):
         else:
             assert response.status_code == 403
             login.assert_not_called()
+
+
+def test_initiate_preserves_existing_session_until_callback():
+    from urllib.parse import urlsplit, parse_qs
+
+    request = RequestFactory().get("/auth/oidc/", {"next_path": "/workspace"})
+    request.session = Session(_auth_user_id="existing-user")
+    with (
+        patch(VIEW + "configuration", return_value=CONFIG),
+        patch(VIEW + "discovery", return_value=DOCUMENT),
+        patch(VIEW + "Instance") as instance,
+    ):
+        instance.objects.filter.return_value.exists.return_value = True
+        response = OIDCInitiateEndpoint.as_view()(request)
+    assert response.status_code == 302
+    assert request.session["_auth_user_id"] == "existing-user"
+    transaction = request.session["oidc_transaction"]
+    params = parse_qs(urlsplit(response["Location"]).query)
+    assert params["state"] == [transaction["state"]]
+    assert params["nonce"] == [transaction["nonce"]]
+    assert params["code_challenge"] == [oidc.challenge(transaction["verifier"])]
+    assert params["code_challenge_method"] == ["S256"]

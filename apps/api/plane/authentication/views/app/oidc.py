@@ -47,7 +47,8 @@ class OIDCInitiateEndpoint(View):
                 started=time.time(),
                 next_path=request.GET.get("next_path", ""),
             )
-            request.session.cycle_key()
+            # Django login rotates anonymous sessions at callback. Rotating here
+            # invalidates concurrent requests from an already logged-in SPA.
             request.session["oidc_transaction"] = transaction
             return HttpResponseRedirect(authorization_url(config, document, transaction))
         except ERRORS:
